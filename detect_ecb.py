@@ -22,7 +22,6 @@ def countRepetitions(ciphertext):
     block_counts = Counter(blocks)
     
     # Calculate total repetitions
-    # For each unique block, if it appears n times, there are (n-1) repetitions
     total_repetitions = 0
     for block, count in block_counts.items():
         if count > 1:
@@ -30,42 +29,28 @@ def countRepetitions(ciphertext):
     
     return total_repetitions
 
-def detectECBMode(ciphertext):
-    """
-    Detect if ciphertext was encrypted using ECB mode.
-    ECB mode will have repeated blocks for repeated plaintext blocks.
-    
-    Input:
-        ciphertext (bytes): The ciphertext in binary format
-        
-    Returns:
-        bool: True if ECB mode detected (repetitions found), False otherwise
-    """
-    repetitions = countRepetitions(ciphertext)
-    return repetitions > 0
-
 def is_valid_hex(hex_string):
-    """Check if string is valid hexadecimal."""
     try:
         bytes.fromhex(hex_string)
         return True
     except ValueError:
         return False
 
-def analyze_ciphertexts(filename):
+def detectECBMode(filename):
     """
     Analyze all ciphertexts and identify the one encrypted with ECB mode.
     
     Input:
         filename (str): Path to the file containing ciphertexts
+        
+    Returns:
+        bool: True if ECB mode detected in any ciphertext, False otherwise
     """
     import os
     
-    # Check if file exists
     if not os.path.isfile(filename):
         print(f"Error: File '{filename}' not found.")
-        print("Please ensure the ciphertexts.txt file is in the same directory.")
-        return
+        return False
     
     with open(filename, 'r') as f:
         lines = f.readlines()
@@ -85,9 +70,9 @@ def analyze_ciphertexts(filename):
         
         ciphertext = bytes.fromhex(hex_ciphertext)
         
-        # Check if this ciphertext was encrypted with ECB mode
-        if detectECBMode(ciphertext):
-            repetitions = countRepetitions(ciphertext)
+        # Check if ECB mode detected (has repeated 16-byte blocks)
+        repetitions = countRepetitions(ciphertext)
+        if repetitions > 0:
             print(f"\nECB Mode Detected (Line {line_num}) \n")
             print("Ciphertext:")
             print(hex_ciphertext)
@@ -96,10 +81,12 @@ def analyze_ciphertexts(filename):
     
     if not ecb_found:
         print("\nNo ECB mode encryption detected.")
+    
+    return ecb_found
 
 def main():
     filename = "ciphertexts.txt"
-    analyze_ciphertexts(filename)
+    detectECBMode(filename)
 
 if __name__ == "__main__":
     main()
